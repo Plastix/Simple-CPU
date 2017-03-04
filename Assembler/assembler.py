@@ -4,7 +4,7 @@
 # It ain't pretty but it works!
 #
 # Aidan Pieper
-# 
+# 3/16/17
 
 import sys
 from hf import *
@@ -34,13 +34,16 @@ opcodeDict = {
 		'jr':   '1011',
 		}
 
+# Little hack:
+# R-type instruction funct codes are parsed just like normal
+# register arguments
 funcDict = {
-	'add': '$0',
-	'and': '$1',
-	'or':  '$2',
-	'sub': '$3',
-	'slt': '$4',
-	'sgt': '$5',
+	'add': '$0', # funct = 0000
+	'and': '$1', # funct = 0001
+	'or':  '$2', # funct = 0010
+	'sub': '$3', # funct = 0011
+	'slt': '$4', # funct = 0100
+	'sgt': '$5', # funct = 0101
 }
 
 llist = {
@@ -115,6 +118,15 @@ def parsePseudoInstructions(lines):
 		if(operation == 'bge'):
 			l.append('slt $14 ' + operands[0] + " " + operands[1])
 			l.append('beq $14 $0 ' + operands[2])
+		elif(operation == 'bgt'):
+			l.append('slt $14 ' + operands[1] + " " + operands[0])
+			l.append('bne $14 $0 ' + operands[2])
+		elif(operation == 'ble'):
+			l.append('slt $14 ' + operands[1] + " " + operands[0])
+			l.append('beq $14 $0 ' + operands[2])
+		elif(operation == 'blt'):
+			l.append('slt $14 ' + operands[0] + " " + operands[1])
+			l.append('bne $14 $0 ' + operands[2])
 		else:
 			l.append(line)
 	return l
@@ -126,11 +138,11 @@ def AssemblyToHex(infilename,outfilename):
 	then save that machinecode to an outputfile'''
 	with open(infilename) as f:
 		with open(outfilename,'w') as of:
-			of.write("v2.0 raw\n")      # Header for Logism
+			of.write("v2.0 raw\n") # Header for Logism
 
 			lines = [line.rstrip() for line in f.readlines()] # read assembly and strip whitespace
 			lines = [line[:line.find('#')] if line.find('#') != -1 else line for line in lines ] # strip comments
-			lines = [line for line in lines if line != '']
+			lines = [line for line in lines if line != ''] 
 			lines = parsePseudoInstructions(lines)
 
 			for outline in (bs2hex(l, INSTR_LEN) for l in 
@@ -141,11 +153,6 @@ def AssemblyToHex(infilename,outfilename):
 	f.close()
 	
 if __name__ == "__main__":
-	#### These two lines show you how to iterate through arguments ###
-	#### You can remove them when writing your own assembler
-	#print 'Number of arguments:', len(sys.argv), 'arguments.'
-	#print 'Argument List:', str(sys.argv)
-
 	## This is error checking to make sure the correct number of arguments were used
 	## you'll have to change this if your assembler takes more or fewer args	
 	if (len(sys.argv) != 3):
